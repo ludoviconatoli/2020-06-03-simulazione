@@ -11,7 +11,9 @@ import java.util.ResourceBundle;
 
 import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Model;
+import it.polito.tdp.PremierLeague.model.Opponent;
 import it.polito.tdp.PremierLeague.model.Player;
+import it.polito.tdp.PremierLeague.model.TopPlayer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -48,64 +50,67 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-    	
-    	this.txtResult.clear();
-    	double x;
+    	txtResult.clear();
+    	Double x = null;
     	try {
-    		x = Double.parseDouble(this.txtGoals.getText());
-    	}catch(NumberFormatException nfe) {
-    		this.txtResult.setText("Indica prima un numero minimo di goal");
+    		x = Double.parseDouble(txtGoals.getText());
+    	} catch (NumberFormatException e) {
+    		txtResult.appendText("Inserire un numero minimo di goal nel formato corretto");
     		return;
     	}
-    	
-    	model.creaGrafo(x);
-    	this.txtResult.appendText("GRAFO CREATO\n\n");
-    	this.txtResult.appendText("#vertici: " + model.getNVertici() +"\n");
-    	this.txtResult.appendText("#archi: " + model.getNEdges());
+    	this.model.creaGrafo(x);
+    	txtResult.appendText("Grafo creato\n");
+    	txtResult.appendText("# VERTICI: " + this.model.nVertici() + "\n");
+    	txtResult.appendText("# ARCHI: " + this.model.nArchi());
+
     }
 
     @FXML
     void doDreamTeam(ActionEvent event) {
-    	this.txtResult.clear();
-    	int k;
-    	try {
-    		k = Integer.parseInt(this.txtK.getText());
-    	}catch(NumberFormatException nfe) {
-    		this.txtResult.setText("Prima inserisci k, ossia un numero di giocatori");
+    	txtResult.clear();
+    	
+    	if(this.model.getGrafo() == null) {
+    		txtResult.clear();
+    		txtResult.appendText("Crea prima il grafo!\n");
     		return;
     	}
     	
-    	List<Player> best = new ArrayList<>(model.getDreamTeam(k));
-    	this.txtResult.appendText("DreamTeam: \n\n");
+    	Integer k = null;
     	
-    	for(Player p: best) {
-    		this.txtResult.appendText(p.toString() + "\n");
+    	try {
+    		k = Integer.parseInt(txtK.getText());
+    	} catch(NumberFormatException e) {
+        	txtResult.clear();
+    		txtResult.appendText("Inserisce un valore intero per k");
+    		return;
     	}
+    	
+    	List<Player> dreamTeam = this.model.getDreamTeam(k);
+    	int degree = this.model.getBestDegree();
+    	
+    
+    	
+    	txtResult.appendText("DREAM TEAM - grado di titolarità: " + degree + "\n\n");
+    	for(Player p : dreamTeam)
+    		txtResult.appendText(p.toString() + "\n");
     }
 
     @FXML
     void doTopPlayer(ActionEvent event) {
-    	this.txtResult.clear();
-    	double x;
-    	try {
-    		x = Double.parseDouble(this.txtGoals.getText());
-    	}catch(NumberFormatException nfe) {
-    		this.txtResult.setText("Indica prima un numero minimo di goal");
+    	txtResult.clear();
+    	TopPlayer topPlayer = this.model.getTopPlayer();
+    	if(topPlayer == null) {
+    		txtResult.appendText("Crea il grafo!");
     		return;
     	}
     	
-    	Player best = model.getTopPlayer();
-    	List<Adiacenza> bat = new ArrayList<>(model.getBattuti());
-    	    	
-    	if(best == null || bat == null) {
-    		this.txtResult.setText("Prima crea il grafo");
-    		return;
-    	}
+    	txtResult.appendText("TOP PLAYER: " + topPlayer.getPlayer().toString());
+    	txtResult.appendText("\n\nAVVERSARI BATTUTI:\n");
     	
-    	this.txtResult.appendText("Giocatore migliore: " + best.toString() +"\n\n");
-    	for(Adiacenza a: bat) {
-    		this.txtResult.appendText(a.getP2().toString() +"| " + a.getPeso() +"\n");
+    	for(Opponent o : topPlayer.getOpponents()) {
+    		txtResult.appendText(o.toString() + "\n");
     	}
+
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete

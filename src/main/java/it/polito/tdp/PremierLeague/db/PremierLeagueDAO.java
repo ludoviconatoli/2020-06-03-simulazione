@@ -14,33 +14,26 @@ import it.polito.tdp.PremierLeague.model.Player;
 
 public class PremierLeagueDAO {
 	
-	public void listAllPlayers(Map<Integer, Player> mappa, double minG){
-		
-		String sql = "SELECT p.PlayerID, p.Name, AVG(a.Goals) AS media "
-				+ "FROM actions a, players p "
-				+ "WHERE a.PlayerID = p.PlayerID "
-				+ "GROUP BY p.PlayerID, p.Name "
-				+ "HAVING AVG(a.Goals) > ?";
-		
+	public List<Player> listAllPlayers(){
+		String sql = "SELECT * FROM Players";
+		List<Player> result = new ArrayList<Player>();
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setDouble(1, minG);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
+
+				Player player = new Player(res.getInt("PlayerID"), res.getString("Name"));
 				
-				if(!mappa.containsKey(res.getInt("p.PlayerID"))) {
-					
-					Player player = new Player(res.getInt("p.PlayerID"), res.getString("p.Name"));
-					mappa.put(player.getPlayerID(), player);
-				}
-				
+				result.add(player);
 			}
 			conn.close();
+			return result;
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 	
@@ -69,6 +62,35 @@ public class PremierLeagueDAO {
 		}
 	}
 	
+	public void getVertici(double x, Map<Integer,Player> idMap){
+		String sql = "SELECT P.PlayerID AS id, P.Name AS name " + 
+				"FROM Players P, Actions A " + 
+				"WHERE A.PlayerID = P.PlayerID " + 
+				"GROUP BY P.PlayerID, P.Name " + 
+				"HAVING AVG(A.Goals) > ?";
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setDouble(1, x);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				if(!idMap.containsKey(res.getInt("id"))) {
+
+					Player player = new Player(res.getInt("id"), res.getString("name"));
+					idMap.put(player.getPlayerID(), player);
+				}
+				
+			}
+			conn.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public List<Adiacenza> getAdiacenze(Map<Integer,Player> idMap){
 		String sql = "SELECT A1.PlayerID AS p1, A2.PlayerID AS p2, (SUM(A1.TimePlayed) - SUM(A2.TimePlayed)) AS peso " + 
 				"FROM 	Actions A1, Actions A2 " + 
@@ -83,11 +105,8 @@ public class PremierLeagueDAO {
 			PreparedStatement st = conn.prepareStatement(sql);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
-				
 				if(idMap.containsKey(res.getInt("p1")) && idMap.containsKey(res.getInt("p2"))) {
-					if(res.getInt("peso") != 0) {
-						result.add(new Adiacenza(idMap.get(res.getInt("p1")), idMap.get(res.getInt("p2")), res.getInt("peso")));
-					}
+					result.add(new Adiacenza(idMap.get(res.getInt("p1")), idMap.get(res.getInt("p2")), res.getInt("peso")));
 				}
 			}
 			conn.close();

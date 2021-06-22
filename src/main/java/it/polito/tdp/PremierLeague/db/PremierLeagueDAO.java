@@ -6,32 +6,41 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import it.polito.tdp.PremierLeague.model.Action;
+import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Player;
 
 public class PremierLeagueDAO {
 	
-	public List<Player> listAllPlayers(){
-		String sql = "SELECT * FROM Players";
-		List<Player> result = new ArrayList<Player>();
+	public void listAllPlayers(Map<Integer, Player> mappa, double minG){
+		
+		String sql = "SELECT p.PlayerID, p.Name, AVG(a.Goals) AS media "
+				+ "FROM actions a, players p "
+				+ "WHERE a.PlayerID = p.PlayerID "
+				+ "GROUP BY p.PlayerID, p.Name "
+				+ "HAVING AVG(a.Goals) > ?";
+		
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
+			st.setDouble(1, minG);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
-
-				Player player = new Player(res.getInt("PlayerID"), res.getString("Name"));
 				
-				result.add(player);
+				if(!mappa.containsKey(res.getInt("p.PlayerID"))) {
+					
+					Player player = new Player(res.getInt("p.PlayerID"), res.getString("p.Name"));
+					mappa.put(player.getPlayerID(), player);
+				}
+				
 			}
 			conn.close();
-			return result;
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return null;
 		}
 	}
 	
@@ -59,4 +68,36 @@ public class PremierLeagueDAO {
 			return null;
 		}
 	}
+	
+	public List<Adiacenza> getAdiacenze(Map<Integer,Player> idMap){
+		String sql = "SELECT A1.PlayerID AS p1, A2.PlayerID AS p2, (SUM(A1.TimePlayed) - SUM(A2.TimePlayed)) AS peso " + 
+				"FROM 	Actions A1, Actions A2 " + 
+				"WHERE A1.TeamID != A2.TeamID " + 
+				"	AND A1.MatchID = A2.MatchID " + 
+				"	AND A1.starts = 1 AND A2.starts = 1 " + 
+				"	AND A1.PlayerID > A2.PlayerID " + 
+				"GROUP BY A1.PlayerID,A2.PlayerID";
+		List<Adiacenza> result = new ArrayList<Adiacenza>();
+		Connection conn = DBConnect.getConnection();
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+				
+				if(idMap.containsKey(res.getInt("p1")) && idMap.containsKey(res.getInt("p2"))) {
+					if(res.getInt("peso") != 0) {
+						result.add(new Adiacenza(idMap.get(res.getInt("p1")), idMap.get(res.getInt("p2")), res.getInt("peso")));
+					}
+				}
+			}
+			conn.close();
+			return result;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		
+	}
+	
 }

@@ -5,9 +5,13 @@
 package it.polito.tdp.PremierLeague;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Model;
+import it.polito.tdp.PremierLeague.model.Player;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -44,17 +48,64 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	
+    	this.txtResult.clear();
+    	double x;
+    	try {
+    		x = Double.parseDouble(this.txtGoals.getText());
+    	}catch(NumberFormatException nfe) {
+    		this.txtResult.setText("Indica prima un numero minimo di goal");
+    		return;
+    	}
+    	
+    	model.creaGrafo(x);
+    	this.txtResult.appendText("GRAFO CREATO\n\n");
+    	this.txtResult.appendText("#vertici: " + model.getNVertici() +"\n");
+    	this.txtResult.appendText("#archi: " + model.getNEdges());
     }
 
     @FXML
     void doDreamTeam(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	int k;
+    	try {
+    		k = Integer.parseInt(this.txtK.getText());
+    	}catch(NumberFormatException nfe) {
+    		this.txtResult.setText("Prima inserisci k, ossia un numero di giocatori");
+    		return;
+    	}
+    	
+    	List<Player> best = new ArrayList<>(model.getDreamTeam(k));
+    	this.txtResult.appendText("DreamTeam: \n\n");
+    	
+    	for(Player p: best) {
+    		this.txtResult.appendText(p.toString() + "\n");
+    	}
     }
 
     @FXML
     void doTopPlayer(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	double x;
+    	try {
+    		x = Double.parseDouble(this.txtGoals.getText());
+    	}catch(NumberFormatException nfe) {
+    		this.txtResult.setText("Indica prima un numero minimo di goal");
+    		return;
+    	}
+    	
+    	Player best = model.getTopPlayer();
+    	List<Adiacenza> bat = new ArrayList<>(model.getBattuti());
+    	    	
+    	if(best == null || bat == null) {
+    		this.txtResult.setText("Prima crea il grafo");
+    		return;
+    	}
+    	
+    	this.txtResult.appendText("Giocatore migliore: " + best.toString() +"\n\n");
+    	for(Adiacenza a: bat) {
+    		this.txtResult.appendText(a.getP2().toString() +"| " + a.getPeso() +"\n");
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
